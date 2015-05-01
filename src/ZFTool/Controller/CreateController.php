@@ -146,7 +146,7 @@ class CreateController extends AbstractActionController
         ));
 
         $file = new Generator\FileGenerator(array(
-            'classes' => $code
+            'classes' => array($code)
         ));
 
         if (file_put_contents($entityPath, $file->generate())) {
