@@ -1,6 +1,6 @@
 {
-    "name": "zendframework/zftool",
-    "description": "Utility module for Zend Framework 2 applications.",
+    "name": "ranbogmord/zftool",
+    "description": "Utility module for Zend Framework 2 applications. Restified.",
     "keywords": [
         "zf2",
         "tool"
