@@ -113,15 +113,20 @@ class Module
         return include __DIR__ . '/config/module.config.php';
     }
 
+    public function getServiceConfig()
+    {
+        return include __DIR__ . "/config/services.config.php";
+    }
+
     public function getAutoloaderConfig()
     {
-        return array(
-            'Zend\Loader\StandardAutoloader' => array(
-                'namespaces' => array(
+        return [
+            'Zend\Loader\StandardAutoloader' => [
+                'namespaces' => [
                     __NAMESPACE__ => __DIR__ . '/src/' . __NAMESPACE__,
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
     }
 }
 
@@ -137,8 +142,28 @@ EOD;
     {
         return <<<EOD
 <?php
-return array(
-);
+return [
+    'view_manager' => [
+        'strategies' => [
+            'ViewJsonStrategy',
+        ],
+    ],
+];
+EOD;
+    }
+
+    /**
+     *
+     * @param type $name
+     * @return type
+     */
+    public static function getServiceConfig($name)
+    {
+        return <<<EOD
+<?php
+return [
+    'factories' => []
+];
 EOD;
     }
 

@@ -117,17 +117,35 @@ class CreateController extends AbstractActionController
 
         $code = new Generator\ClassGenerator();
         $code->setNamespaceName(ucfirst($module) . '\Controller')
-             ->addUse('Zend\Mvc\Controller\AbstractActionController')
-             ->addUse('Zend\View\Model\ViewModel');
+             ->addUse('Zend\Mvc\Controller\AbstractRestfulController')
+             ->addUse('Zend\View\Model\JsonModel');
 
         $code->setName($controller)
              ->addMethods(array(
                 new Generator\MethodGenerator(
-                    'indexAction',
-                    array(),
+                    'create',
+                    array('data'),
                     Generator\MethodGenerator::FLAG_PUBLIC,
-                    'return new ViewModel();'
+                    'return new JsonModel([]);'
                 ),
+                 new Generator\MethodGenerator(
+                     'update',
+                     array('id', 'data'),
+                     Generator\MethodGenerator::FLAG_PUBLIC,
+                     'return new JsonModel([]);'
+                 ),
+                 new Generator\MethodGenerator(
+                     'get',
+                     array('id'),
+                     Generator\MethodGenerator::FLAG_PUBLIC,
+                     'return new JsonModel([]);'
+                 ),
+                 new Generator\MethodGenerator(
+                     'getList',
+                     array(),
+                     Generator\MethodGenerator::FLAG_PUBLIC,
+                     'return new JsonModel([]);'
+                 )
              ))
              ->setExtendedClass('AbstractActionController');
 
@@ -137,21 +155,7 @@ class CreateController extends AbstractActionController
             )
         );
 
-        $filter = new CamelCaseToDashFilter();
-        $viewfolder = strtolower($filter->filter($module));
-
-        $dir = $path . "/module/$module/view/$viewfolder/" . strtolower($filter->filter($name));
-        if (!file_exists($dir)) {
-            mkdir($dir, 0777, true);
-        }
-
-        $phtml = false;
-        $phtmlPath = $dir . "/index.phtml";
-        if (file_put_contents($phtmlPath, 'Action "index", controller "'.$ucName.'", module "'.$module.'".')) {
-            $phtml = true;
-        }
-
-        if (file_put_contents($ctrlPath, $file->generate()) && $phtml == true) {
+        if (file_put_contents($ctrlPath, $file->generate())) {
             $console->writeLine("The controller $name has been created in module $module.", Color::GREEN);
         } else {
             $console->writeLine("There was an error during controller creation.", Color::RED);
@@ -188,9 +192,9 @@ class CreateController extends AbstractActionController
         $classReflection = $fileReflection->getClass($class);
 
         $classGenerator = Generator\ClassGenerator::fromReflection($classReflection);
-        $classGenerator->addUse('Zend\Mvc\Controller\AbstractActionController')
-                       ->addUse('Zend\View\Model\ViewModel')
-                       ->setExtendedClass('AbstractActionController');
+        $classGenerator->addUse('Zend\Mvc\Controller\AbstractRestfulController')
+                       ->addUse('Zend\View\Model\JsonModel')
+                       ->setExtendedClass('AbstractRestfulController');
 
         if ($classGenerator->hasMethod($action . 'Action')) {
             return $this->sendError(
@@ -203,7 +207,7 @@ class CreateController extends AbstractActionController
                 $action . 'Action',
                 array(),
                 Generator\MethodGenerator::FLAG_PUBLIC,
-                'return new ViewModel();'
+                'return new JsonModel([]);'
             ),
         ));
 
@@ -213,23 +217,6 @@ class CreateController extends AbstractActionController
             )
         );
 
-        $filter    = new CamelCaseToDashFilter();
-        $phtmlPath = sprintf(
-            '%s/module/%s/view/%s/%s/%s.phtml',
-            $path,
-            $module,
-            strtolower($filter->filter($module)),
-            strtolower($filter->filter($controller)),
-            strtolower($filter->filter($action))
-        );
-        if (!file_exists($phtmlPath)) {
-            $contents = sprintf("Module: %s\nController: %s\nAction: %s", $module, $controller, $action);
-            if (file_put_contents($phtmlPath, $contents)) {
-                $console->writeLine(sprintf("Created view script at %s", $phtmlPath), Color::GREEN);
-            } else {
-                $console->writeLine(sprintf("An error occurred when attempting to create view script at location %s", $phtmlPath), Color::RED);
-            }
-        }
 
         if (file_put_contents($controllerPath, $fileGenerator->generate())) {
             $console->writeLine(sprintf('The action %s has been created in controller %s\\Controller\\%s.', $action, $module, $controller), Color::GREEN);
@@ -261,19 +248,16 @@ class CreateController extends AbstractActionController
             );
         }
 
-        $filter = new CamelCaseToDashFilter();
-        $viewfolder = strtolower($filter->filter($name));
-
         $name = ucfirst($name);
         mkdir("$path/module/$name/config", 0777, true);
         mkdir("$path/module/$name/src/$name/Controller", 0777, true);
-        mkdir("$path/module/$name/view/$viewfolder", 0777, true);
 
         // Create the Module.php
         file_put_contents("$path/module/$name/Module.php", Skeleton::getModule($name));
 
         // Create the module.config.php
         file_put_contents("$path/module/$name/config/module.config.php", Skeleton::getModuleConfig($name));
+        file_put_contents("$path/module/$name/config/services.config.php", Skeleton::getServiceConfig($name));
 
         // Add the module in application.config.php
         $application = require "$path/config/application.config.php";
