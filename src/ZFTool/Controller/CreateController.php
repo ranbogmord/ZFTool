@@ -99,6 +99,8 @@ class CreateController extends AbstractActionController
         $name = $request->getParam('name');
         $module = $request->getParam('module');
         $path = $request->getParam('path', '.');
+        $createRepo = $request->getParam('--create-repo', null);
+        $console->writeLine("create-repo is $createRepo");
 
         if (!file_exists("$path/module") || !file_exists("$path/config/application.config.php")) {
             return $this->sendError(
@@ -153,6 +155,11 @@ class CreateController extends AbstractActionController
         } else {
             $console->writeLine("There was an error during entity creation.", Color::RED);
         }
+    }
+
+    public function repositoryAction($name = null, $module = null, $path = null)
+    {
+
     }
 
     public function controllerAction()
