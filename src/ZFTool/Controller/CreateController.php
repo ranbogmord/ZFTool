@@ -99,7 +99,7 @@ class CreateController extends AbstractActionController
         $name = $request->getParam('name');
         $module = $request->getParam('module');
         $path = $request->getParam('path', '.');
-        $createRepo = $request->getParam('--create-repo', "norepo");
+        $createRepo = $request->getParam('create-repo', "norepo");
         $console->writeLine("create-repo is $createRepo");
 
         if (!file_exists("$path/module") || !file_exists("$path/config/application.config.php")) {
