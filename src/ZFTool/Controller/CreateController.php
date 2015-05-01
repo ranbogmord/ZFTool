@@ -126,8 +126,7 @@ class CreateController extends AbstractActionController
                 new Generator\PropertyGenerator(
                     'id',
                     null,
-                    Generator\PropertyGenerator::FLAG_PRIVATE,
-                    new Generator\DocBlockGenerator('@ORM\Column(type="integer")' . "\n" . '@ORM\Id' . "\n" . '@ORM\GeneratedValue(strategy="AUTO")')
+                    Generator\PropertyGenerator::FLAG_PRIVATE
                 )
             ));
         $code->addMethods(array(
