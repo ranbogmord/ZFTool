@@ -91,6 +91,71 @@ class CreateController extends AbstractActionController
         $console->writeLine("For more info in $path/README.md");
     }
 
+    public function entityAction()
+    {
+        $console = $this->getServiceLocator()->get('console');
+        $request = $this->getRequest();
+
+        $name = $request->getParam('name');
+        $module = $request->getParam('module');
+        $path = $request->getParam('path', '.');
+
+        if (!file_exists("$path/module") || !file_exists("$path/config/application.config.php")) {
+            return $this->sendError(
+                "The path $path doesn't contain a ZF2 application. I cannot create a module here."
+            );
+        }
+        if (file_exists("$path/module/$module/src/$module/Entity/$name")) {
+            return $this->sendError(
+                "The entity $name already exists in module $module."
+            );
+        }
+
+        $ucName = ucfirst($name);
+        $entityPath = $path . '/module/' . $module . '/src/' . $module . '/Entity/' . $ucName.'.php';
+        $repoClass = $module . '\Repository\\' . $ucName . 'Repository';
+        $entityDocBlock = '@ORM\Entity(repositoryClass=\'' . $repoClass . '\')';
+
+        $code = new Generator\ClassGenerator();
+        $code->setNamespaceName(ucfirst($module) . '\Entity');
+
+        $code->setDocBlock(new Generator\DocBlockGenerator($entityDocBlock));
+
+        $code->setName($ucName)
+            ->addProperties(array(
+                new Generator\PropertyGenerator(
+                    'id',
+                    null,
+                    Generator\PropertyGenerator::FLAG_PRIVATE,
+                    new Generator\DocBlockGenerator('@ORM\Column(type="integer")' . "\n" . '@ORM\Id' . "\n" . '@ORM\GeneratedValue(strategy="AUTO")')
+                )
+            ));
+        $code->addMethods(array(
+            new Generator\MethodGenerator(
+                'getId',
+                array(),
+                Generator\MethodGenerator::FLAG_PUBLIC,
+                'return $this->id;'
+            ),
+            new Generator\MethodGenerator(
+                'setId',
+                array('id'),
+                Generator\MethodGenerator::FLAG_PUBLIC,
+                '$this->id = $id;'
+            )
+        ));
+
+        $file = new Generator\FileGenerator(array(
+            'classes' => $code
+        ));
+
+        if (file_put_contents($entityPath, $file->generate())) {
+            $console->writeLine("The entity $name has been created in module $module.", Color::GREEN);
+        } else {
+            $console->writeLine("There was an error during entity creation.", Color::RED);
+        }
+    }
+
     public function controllerAction()
     {
         $console = $this->getServiceLocator()->get('console');
@@ -126,28 +191,28 @@ class CreateController extends AbstractActionController
                     'create',
                     array('data'),
                     Generator\MethodGenerator::FLAG_PUBLIC,
-                    'return new JsonModel([]);'
+                    'return $this->getResponse()->setStatusCode(405);'
                 ),
                  new Generator\MethodGenerator(
                      'update',
                      array('id', 'data'),
                      Generator\MethodGenerator::FLAG_PUBLIC,
-                     'return new JsonModel([]);'
+                     'return $this->getResponse()->setStatusCode(405);'
                  ),
                  new Generator\MethodGenerator(
                      'get',
                      array('id'),
                      Generator\MethodGenerator::FLAG_PUBLIC,
-                     'return new JsonModel([]);'
+                     'return $this->getResponse()->setStatusCode(405);'
                  ),
                  new Generator\MethodGenerator(
                      'getList',
                      array(),
                      Generator\MethodGenerator::FLAG_PUBLIC,
-                     'return new JsonModel([]);'
+                     'return $this->getResponse()->setStatusCode(405);'
                  )
              ))
-             ->setExtendedClass('AbstractActionController');
+             ->setExtendedClass('AbstractRestfulController');
 
         $file = new Generator\FileGenerator(
             array(

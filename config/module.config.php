@@ -135,6 +135,15 @@ return array(
                         ),
                     ),
                 ),
+                'zftool-create-entity' => array(
+                    'options' => array(
+                        'route' => 'create entity <name> <module> [<path>]',
+                        'defaults' => array(
+                            'controller' => 'ZFTool\Controller\Create',
+                            'action' => 'entity'
+                        )
+                    )
+                )
             ),
         ),
     ),
