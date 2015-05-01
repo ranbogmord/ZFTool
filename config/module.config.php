@@ -137,7 +137,7 @@ return array(
                 ),
                 'zftool-create-entity' => array(
                     'options' => array(
-                        'route' => 'create entity <name> <module> [<path>]',
+                        'route' => 'create entity <name> <module> [<path>] [--create-repo]',
                         'defaults' => array(
                             'controller' => 'ZFTool\Controller\Create',
                             'action' => 'entity'
