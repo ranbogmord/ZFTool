@@ -380,7 +380,7 @@ EOD;
                 $console->writeLine("There was an error during controller creation.", Color::RED);
             }
 
-            $moduleCfg = require "$path/modules/$module/config/module.config.php";
+            $moduleCfg = require "$path/module/$module/config/module.config.php";
             $ctrlName = $module . '\Controller\\' . $ucName;
             if (!array_key_exists($ctrlName, $moduleCfg["controllers"]["invokables"])) {
                 $moduleCfg["controllers"]["invokables"][$ctrlName] = $module . '\Controller\\' . $ucName . 'Controller';
