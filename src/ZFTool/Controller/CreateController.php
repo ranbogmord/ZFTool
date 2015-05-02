@@ -162,7 +162,7 @@ class CreateController extends AbstractActionController
 
         $name = $request->getParam('name');
         $module = $request->getParam('module');
-        $path = $request->getParam('path', '/');
+        $path = rtrim($request->getParam('path', '.'), '/');
         $classes = array();
         $ucName = ucfirst($name);
 
