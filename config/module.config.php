@@ -146,7 +146,7 @@ return array(
                 ),
                 'zftool-create-full' => array(
                     'options' => array(
-                        'route' => 'create full <name> <module> [path] [--no-repo] [--no-service] [--no-controller]',
+                        'route' => 'create full <name> <module> [<path>] [--no-repo] [--no-service] [--no-controller]',
                         'defaults' => array(
                             'controller' => 'ZFTool\Controller\Create',
                             'action' => 'full'
