@@ -137,13 +137,22 @@ return array(
                 ),
                 'zftool-create-entity' => array(
                     'options' => array(
-                        'route' => 'create entity <name> <module> [<path>] [--create-repo]',
+                        'route' => 'create entity <name> <module> [<path>]',
                         'defaults' => array(
                             'controller' => 'ZFTool\Controller\Create',
                             'action' => 'entity'
                         )
                     )
-                )
+                ),
+                'zftool-create-full' => array(
+                    'options' => array(
+                        'route' => 'create full <name> <module> [path] [--no-repo] [--no-service] [--no-controller]',
+                        'defaults' => array(
+                            'controller' => 'ZFTool\Controller\Create',
+                            'action' => 'full'
+                        )
+                    )
+                ),
             ),
         ),
     ),

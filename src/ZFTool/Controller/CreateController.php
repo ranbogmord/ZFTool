@@ -99,8 +99,6 @@ class CreateController extends AbstractActionController
         $name = $request->getParam('name');
         $module = $request->getParam('module');
         $path = $request->getParam('path', '.');
-        $createRepo = $request->params()->fromRoute('create-repo', "norepo");
-        $console->writeLine("create-repo is $createRepo");
 
         if (!file_exists("$path/module") || !file_exists("$path/config/application.config.php")) {
             return $this->sendError(
@@ -157,9 +155,203 @@ class CreateController extends AbstractActionController
         }
     }
 
-    public function repositoryAction($name = null, $module = null, $path = null)
+    public function fullAction()
     {
+        $console = $this->getServiceLocator()->get('console');
+        $request = $this->getRequest();
 
+        $name = $request->getParam('name');
+        $module = $request->getParam('module');
+        $path = $request->getParam('path', '/');
+        $classes = array();
+        $ucName = ucfirst($name);
+
+        $skipRepo = $this->params()->fromRoute('no-repo', false);
+        $skipService = $this->params()->fromRoute('no-service', false);
+        $skipController = $this->params()->fromRoute('no-controller', false);
+
+        if (!file_exists("$path/module") || !file_exists("$path/config/application.config.php")) {
+            return $this->sendError(
+                "The path $path doesn't contain a ZF2 application. I cannot create a module here."
+            );
+        }
+
+        // Does entity exist?
+        if (file_exists("$path/module/$module/src/$module/Entity/$name")) {
+            return $this->sendError(
+                "The entity $name already exists in module $module."
+            );
+        }
+
+        // Create Entity
+        $entityPath = $path . '/module/' . $module . '/src/' . $module . '/Entity/' . $ucName.'.php';
+        $entity = new Generator\ClassGenerator();
+        $entity->setNamespaceName(ucfirst($module) . '\Entity');
+
+        $entity->setName($ucName)
+            ->addProperties(array(
+                new Generator\PropertyGenerator(
+                    'id',
+                    null,
+                    Generator\PropertyGenerator::FLAG_PRIVATE
+                )
+            ));
+        $entity->addMethods(array(
+            new Generator\MethodGenerator(
+                'getId',
+                array(),
+                Generator\MethodGenerator::FLAG_PUBLIC,
+                'return $this->id;'
+            ),
+            new Generator\MethodGenerator(
+                'setId',
+                array('id'),
+                Generator\MethodGenerator::FLAG_PUBLIC,
+                '$this->id = $id;'
+            )
+        ));
+
+        if (!$skipRepo) {
+            $repoClass = $module . '\Repository\\' . $ucName . 'Repository';
+            $entityDocBlock = '@ORM\Entity(repositoryClass=\'' . $repoClass . '\')';
+        } else {
+            $entityDocBlock = '@ORM\Entity';
+        }
+
+        $entity->setDocBlock(new Generator\DocBlockGenerator($entityDocBlock));
+
+        $entityFile = new Generator\FileGenerator(array(
+            'classes' => array($entity)
+        ));
+
+        if (file_put_contents($entityPath, $entityFile->generate())) {
+            $console->writeLine("The entity $name has been created in module $module.", Color::GREEN);
+        } else {
+            $console->writeLine("There was an error during entity creation.", Color::RED);
+        }
+
+
+        // Create repo if not ignored
+        if (!$skipRepo) {
+            $repo = new Generator\ClassGenerator();
+            $repo->setName($ucName . "Repository")
+                ->addUse('Doctrine\ORM\EntityRepository')
+                ->setExtendedClass('EntityRepository')
+                ->setNamespaceName(ucfirst($module) . '\Repository');
+
+            $repoFile = new Generator\FileGenerator(array(
+                'classes' => array($repo)
+            ));
+
+            if (file_put_contents($path . '/module/' . $module . '/src/' . $module . '/Repository/' . $ucName.'Repository.php', $repoFile->generate())) {
+                $console->writeLine("The repository {$ucName}Repository has been created in module $module.", Color::GREEN);
+            } else {
+                $console->writeLine("There was an error during repository creation.", Color::RED);
+            }
+
+            if (!$skipService) {
+                $service = new Generator\ClassGenerator();
+                $service->setName($ucName . "Service")
+                    ->setNamespaceName($module . '\Service')
+                    ->addUse($module . '\Entity\\' . $ucName)
+                    ->addUse('Doctrine\ORM\EntityManager')
+                    ->addProperties(array(
+                        new Generator\PropertyGenerator(
+                            'entityManager',
+                            null,
+                            Generator\PropertyGenerator::FLAG_PRIVATE
+                        ),
+                        new Generator\PropertyGenerator(
+                            $name . 'Repository',
+                            null,
+                            Generator\PropertyGenerator::FLAG_PRIVATE
+                        )
+                    ))
+                    ->addMethods(array(
+                        new Generator\MethodGenerator(
+                            '__construct',
+                            array('entityManager'),
+                            Generator\MethodGenerator::FLAG_PUBLIC,
+                            '$this->entityManager = $entityManager;' . "\n" . '$this->' . $name . 'Repository = $entityManager->getRepository(\'\\' . $module . '\Entity\\' . $ucName . '\');'
+                        )
+                    ));
+
+
+                $serviceFile = new Generator\FileGenerator(array(
+                    'classes' => array($service)
+                ));
+
+                if (file_put_contents($path . '/module/' . $module . '/src/' . $module . '/Service/' . $ucName.'Service.php', $serviceFile->generate())) {
+                    $console->writeLine("The service {$ucName}Service has been created in module $module.", Color::GREEN);
+                } else {
+                    $console->writeLine("There was an error during service creation.", Color::RED);
+                }
+            }
+        }
+
+        if (!$skipController) {
+            $ctrl = new Generator\ClassGenerator();
+            $ctrl->setName($ucName . "Controller")
+                ->setNamespaceName($module . '\Controller')
+                ->addUse('Zend\Mvc\Controller\AbstractRestfulController')
+                ->addUse('Zend\View\Model\JsonModel')
+                ->setExtendedClass('AbstractRestfulController')
+                ->addMethods(array(
+                    new Generator\MethodGenerator(
+                        'getList',
+                        array(),
+                        Generator\MethodGenerator::FLAG_PUBLIC,
+                        'return $this->getResponse()->setStatusCode(501);'
+                    ),
+                    new Generator\MethodGenerator(
+                        'get',
+                        array('id'),
+                        Generator\MethodGenerator::FLAG_PUBLIC,
+                        'return $this->getResponse()->setStatusCode(501);'
+                    ),
+                    new Generator\MethodGenerator(
+                        'create',
+                        array('data'),
+                        Generator\MethodGenerator::FLAG_PUBLIC,
+                        'return $this->getResponse()->setStatusCode(501);'
+                    ),
+                    new Generator\MethodGenerator(
+                        'update',
+                        array('id', 'data'),
+                        Generator\MethodGenerator::FLAG_PUBLIC,
+                        'return $this->getResponse()->setStatusCode(501);'
+                    )
+                ));
+
+            if (!$skipService) {
+                $body = <<<EOD
+if (\$this->{$name}Service) {
+    \$this->{$name}Service = \$this->getServiceLocator()->get('{$module}\Service\{$ucName}Service');
+}
+
+return \$this->{$name}Service;
+EOD;
+
+                $ctrl->addUse($module . '\Service\\' . $ucName . 'Service');
+                $ctrl->addProperty($name . 'Service', null, Generator\PropertyGenerator::FLAG_PRIVATE);
+                $ctrl->addMethod(
+                    'get' . $ucName . 'Service',
+                    array(),
+                    Generator\MethodGenerator::FLAG_PUBLIC,
+                    $body
+                );
+            }
+
+            $ctrlFile = new Generator\FileGenerator(array(
+                'classes' => array($ctrl)
+            ));
+
+            if (file_put_contents($path . '/module/' . $module . '/src/' . $module . '/Controller/' . $ucName.'Controller.php', $ctrlFile->generate())) {
+                $console->writeLine("The controller {$ucName}Controller has been created in module $module.", Color::GREEN);
+            } else {
+                $console->writeLine("There was an error during controller creation.", Color::RED);
+            }
+        }
     }
 
     public function controllerAction()
