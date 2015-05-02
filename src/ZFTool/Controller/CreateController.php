@@ -160,7 +160,7 @@ class CreateController extends AbstractActionController
         $console = $this->getServiceLocator()->get('console');
         $request = $this->getRequest();
 
-        $name = $request->getParam('name');
+        $name = strtolower($request->getParam('name'));
         $module = $request->getParam('module');
         $path = rtrim($request->getParam('path', '.'), '/');
         $classes = array();
@@ -224,6 +224,13 @@ class CreateController extends AbstractActionController
             'classes' => array($entity)
         ));
 
+        if (!file_exists($path . '/module/' . $module . '/src/' . $module . '/Entity')) {
+            $created = mkdir($path . '/module/' . $module . '/src/' . $module . '/Entity', 0755, true);
+            if ($created) {
+                $console->writeLine("Created folder for entity");
+            }
+        }
+
         if (file_put_contents($entityPath, $entityFile->generate())) {
             $console->writeLine("The entity $name has been created in module $module.", Color::GREEN);
         } else {
@@ -242,6 +249,13 @@ class CreateController extends AbstractActionController
             $repoFile = new Generator\FileGenerator(array(
                 'classes' => array($repo)
             ));
+
+            if (!file_exists($path . '/module/' . $module . '/src/' . $module . '/Repository')) {
+                $created = mkdir($path . '/module/' . $module . '/src/' . $module . '/Repository', 0755, true);
+                if ($created) {
+                    $console->writeLine("Created folder for repository");
+                }
+            }
 
             if (file_put_contents($path . '/module/' . $module . '/src/' . $module . '/Repository/' . $ucName.'Repository.php', $repoFile->generate())) {
                 $console->writeLine("The repository {$ucName}Repository has been created in module $module.", Color::GREEN);
@@ -280,6 +294,13 @@ class CreateController extends AbstractActionController
                 $serviceFile = new Generator\FileGenerator(array(
                     'classes' => array($service)
                 ));
+
+                if (!file_exists($path . '/module/' . $module . '/src/' . $module . '/Service')) {
+                    $created = mkdir($path . '/module/' . $module . '/src/' . $module . '/Service', 0755, true);
+                    if ($created) {
+                        $console->writeLine("Created folder for service");
+                    }
+                }
 
                 if (file_put_contents($path . '/module/' . $module . '/src/' . $module . '/Service/' . $ucName.'Service.php', $serviceFile->generate())) {
                     $console->writeLine("The service {$ucName}Service has been created in module $module.", Color::GREEN);
@@ -326,7 +347,7 @@ class CreateController extends AbstractActionController
             if (!$skipService) {
                 $body = <<<EOD
 if (\$this->{$name}Service) {
-    \$this->{$name}Service = \$this->getServiceLocator()->get('{$module}\Service\{$ucName}Service');
+    \$this->{$name}Service = \$this->getServiceLocator()->get('{$module}\Service\\{$ucName}Service');
 }
 
 return \$this->{$name}Service;
@@ -345,6 +366,13 @@ EOD;
             $ctrlFile = new Generator\FileGenerator(array(
                 'classes' => array($ctrl)
             ));
+
+            if (!file_exists($path . '/module/' . $module . '/src/' . $module . '/Controller')) {
+                $created = mkdir($path . '/module/' . $module . '/src/' . $module . '/Controller', 0755, true);
+                if ($created) {
+                    $console->writeLine("Created folder for controller");
+                }
+            }
 
             if (file_put_contents($path . '/module/' . $module . '/src/' . $module . '/Controller/' . $ucName.'Controller.php', $ctrlFile->generate())) {
                 $console->writeLine("The controller {$ucName}Controller has been created in module $module.", Color::GREEN);
