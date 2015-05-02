@@ -381,9 +381,10 @@ EOD;
             }
 
             $moduleCfg = require "$path/module/$module/config/module.config.php";
-            $ctrlName = $module . '\Controller\\' . $ucName;
+            $ctrlName = $module . '\Controller\\' . $ucName . 'Controller';
+
             if (!array_key_exists($ctrlName, $moduleCfg["controllers"]["invokables"])) {
-                $moduleCfg["controllers"]["invokables"][stripslashes($ctrlName)] = stripslashes($module . '\Controller\\' . $ucName . 'Controller');
+                $moduleCfg["controllers"]["invokables"][$ctrlName] = $ctrlName;
                 copy ("$path/module/$module/config/module.config.php", "$path/module/$module/config/module.config.old");
                 $content = <<<EOD
 <?php
