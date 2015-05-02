@@ -165,9 +165,34 @@ EOD;
         return <<<EOD
 <?php
 return [
-    'factories' => []
+    'factories' => [],
+    'initializers' => [
+        'entityManager' => function (\$service, \$sm) {
+            if (\$service instanceof EntityManagerAwareInterface) {
+                \$em = \$sm->get('doctrine.entitymanager.orm_default');
+                \$service->setEntityManager(\$em);
+            }
+        }
+    ]
 ];
 EOD;
+    }
+
+    public static function getEntityManagerInterface($name)
+    {
+        return <<<EOD
+<?php
+
+namespace $name\Interface;
+
+interface EntityManagerAwareInterface
+{
+
+    public function setEntityManager(\Doctrine\ORM\EntityManager \$entityManager);
+}
+
+EOD;
+
     }
 
     /**

@@ -269,6 +269,10 @@ class CreateController extends AbstractActionController
                     ->setNamespaceName($module . '\Service')
                     ->addUse($module . '\Entity\\' . $ucName)
                     ->addUse('Doctrine\ORM\EntityManager')
+                    ->addUse($module . '\Interface\EntityManagerAwareInterface')
+                    ->setImplementedInterfaces(array(
+                        'EntityManagerAwareInterface'
+                    ))
                     ->addProperties(array(
                         new Generator\PropertyGenerator(
                             'entityManager',
@@ -563,7 +567,7 @@ EOD;
 
         $name = ucfirst($name);
         mkdir("$path/module/$name/config", 0777, true);
-        mkdir("$path/module/$name/src/$name/Controller", 0777, true);
+        mkdir("$path/module/$name/src/$name/Interface", 0777, true);
 
         // Create the Module.php
         file_put_contents("$path/module/$name/Module.php", Skeleton::getModule($name));
@@ -571,6 +575,10 @@ EOD;
         // Create the module.config.php
         file_put_contents("$path/module/$name/config/module.config.php", Skeleton::getModuleConfig($name));
         file_put_contents("$path/module/$name/config/services.config.php", Skeleton::getServiceConfig($name));
+
+        // Create EM initializer interface
+        file_put_contents("$path/module/$name/Interface/EntityManagerAwareInterface", Skeleton::getEntityManagerInterface($name));
+
 
         // Add the module in application.config.php
         $application = require "$path/config/application.config.php";
