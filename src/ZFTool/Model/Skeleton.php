@@ -149,7 +149,7 @@ return [
         ],
     ],
     'controllers' => [
-        'invokables => []
+        'invokables' => []
     ]
 ];
 EOD;
