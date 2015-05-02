@@ -148,6 +148,9 @@ return [
             'ViewJsonStrategy',
         ],
     ],
+    'controllers' => [
+        'invokables => []
+    ]
 ];
 EOD;
     }

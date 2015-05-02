@@ -384,7 +384,7 @@ EOD;
             $ctrlName = $module . '\Controller\\' . $ucName;
             if (!array_key_exists($ctrlName, $moduleCfg["controllers"]["invokables"])) {
                 $moduleCfg["controllers"]["invokables"][$ctrlName] = $module . '\Controller\\' . $ucName . 'Controller';
-                copy ("$path/modules/$module/config/module.config.php", "$path/modules/$module/config/module.config.old");
+                copy ("$path/module/$module/config/module.config.php", "$path/module/$module/config/module.config.old");
                 $content = <<<EOD
 <?php
 /**
@@ -397,7 +397,7 @@ EOD;
 EOD;
 
                 $content .= 'return '. Skeleton::exportConfig($moduleCfg) . ";\n";
-                file_put_contents("$path/modules/$module/config/module.config.php", $content);
+                file_put_contents("$path/module/$module/config/module.config.php", $content);
             }
         }
 
